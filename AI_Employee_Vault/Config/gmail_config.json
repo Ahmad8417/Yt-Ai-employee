@@ -1,0 +1,19 @@
+{
+  "auto_reply_enabled": false,
+  "templates": {
+    "general": "Thank you for your email. I've received your message and will get back to you shortly.\n\nBest regards,\nAI Assistant",
+    "out_of_office": "Thank you for your email. I'm currently out of office and will respond when I return.\n\nBest regards",
+    "support": "Thank you for contacting support. Your request has been logged and our team will assist you shortly.\n\nBest regards"
+  },
+  "rules": [
+    {
+      "condition": "subject_contains",
+      "keyword": "urgent",
+      "template": "general",
+      "priority": "high"
+    }
+  ],
+  "working_hours_only": true,
+  "timezone": "America/New_York",
+  "auto_mark_read": false
+}

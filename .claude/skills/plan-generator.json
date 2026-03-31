@@ -1,0 +1,19 @@
+{
+  "name": "plan-generator",
+  "description": "Generate Plan.md files for tasks in Needs_Action. Creates multi-step execution plans based on task type (email, file_drop, linkedin_post, etc.)",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["create", "list", "auto"],
+        "description": "Action to perform"
+      },
+      "task_id": {
+        "type": "string",
+        "description": "Task ID to create plan for"
+      }
+    },
+    "required": ["action"]
+  }
+}

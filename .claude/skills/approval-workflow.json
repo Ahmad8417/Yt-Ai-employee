@@ -1,0 +1,31 @@
+{
+  "name": "approval-workflow",
+  "description": "Human-in-the-Loop (HITL) approval workflow for sensitive actions. Creates approval requests in Pending_Approval folder and monitors Approved/Rejected folders for execution.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["create-request", "check-approved", "list-pending", "approve", "reject"],
+        "description": "The action to perform"
+      },
+      "action_type": {
+        "type": "string",
+        "description": "Type of action requiring approval (for create-request)"
+      },
+      "details": {
+        "type": "object",
+        "description": "Details of the action requiring approval"
+      },
+      "request_id": {
+        "type": "string",
+        "description": "ID of the approval request (for approve/reject)"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Notes for approval/rejection"
+      }
+    },
+    "required": ["action"]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "name": "silver-tier",
+  "description": "Silver Tier capabilities for AI Employee including Gmail watching, LinkedIn posting, plan generation, HITL approval, and scheduling",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "check-gmail",
+          "generate-linkedin",
+          "queue-linkedin",
+          "create-plan",
+          "create-approval",
+          "check-approved",
+          "run-scheduled"
+        ],
+        "description": "Silver Tier action to perform"
+      },
+      "task_id": {
+        "type": "string",
+        "description": "Task ID for creating a plan"
+      },
+      "category": {
+        "type": "string",
+        "description": "LinkedIn post category"
+      },
+      "approval_type": {
+        "type": "string",
+        "description": "Type of action requiring approval"
+      },
+      "details": {
+        "type": "object",
+        "description": "Approval request details"
+      }
+    },
+    "required": ["action"]
+  }
+}

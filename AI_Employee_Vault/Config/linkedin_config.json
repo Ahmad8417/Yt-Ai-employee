@@ -1,0 +1,28 @@
+{
+  "posting_enabled": false,
+  "auto_publish": false,
+  "require_approval": true,
+  "schedule_times": [
+    "09:00",
+    "15:00"
+  ],
+  "max_posts_per_day": 2,
+  "content_categories": [
+    "business_update",
+    "industry_insight",
+    "achievement",
+    "educational",
+    "engagement"
+  ],
+  "tone": "professional",
+  "hashtag_strategy": [
+    "#AI",
+    "#Business",
+    "#Automation",
+    "#Innovation"
+  ],
+  "api_credentials": {
+    "access_token": null,
+    "user_id": null
+  }
+}

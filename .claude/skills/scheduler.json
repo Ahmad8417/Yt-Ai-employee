@@ -1,0 +1,19 @@
+{
+  "name": "scheduler",
+  "description": "Manage scheduled tasks for AI Employee. Supports cron and Windows Task Scheduler integration.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["list", "enable", "disable", "run", "daemon"],
+        "description": "Action to perform"
+      },
+      "job": {
+        "type": "string",
+        "description": "Job name for enable/disable/run actions"
+      }
+    },
+    "required": ["action"]
+  }
+}

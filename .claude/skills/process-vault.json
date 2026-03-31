@@ -1,0 +1,24 @@
+{
+  "name": "process-vault",
+  "description": "Process the AI Employee vault by reading Needs_Action folder, creating plans, and moving completed tasks to Done. This is the core skill for the Bronze Tier AI Employee.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["scan", "process", "move-to-done", "update-dashboard"],
+        "description": "The action to perform on the vault"
+      },
+      "task_id": {
+        "type": "string",
+        "description": "Specific task ID to process (optional, for 'process' action)"
+      },
+      "dry_run": {
+        "type": "boolean",
+        "description": "If true, only show what would be done without making changes",
+        "default": false
+      }
+    },
+    "required": ["action"]
+  }
+}

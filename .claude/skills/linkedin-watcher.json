@@ -1,0 +1,30 @@
+{
+  "name": "linkedin-watcher",
+  "description": "Generate and queue LinkedIn posts for business marketing. Creates content automatically and queues for approval.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["generate", "queue", "schedule", "check"],
+        "description": "Action to perform"
+      },
+      "category": {
+        "type": "string",
+        "enum": ["business_update", "industry_insight", "achievement", "educational", "engagement"],
+        "description": "Content category for post generation"
+      },
+      "days": {
+        "type": "integer",
+        "description": "Number of days to schedule ahead",
+        "default": 7
+      },
+      "approve": {
+        "type": "boolean",
+        "description": "Auto-approve the generated post",
+        "default": false
+      }
+    },
+    "required": ["action"]
+  }
+}

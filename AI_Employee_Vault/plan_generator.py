@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+"""
+Plan Generator for AI Employee - Silver Tier
+Creates Plan.md files for tasks requiring multi-step execution
+"""
+
+import os
+import sys
+import json
+import argparse
+from pathlib import Path
+from datetime import datetime
+from typing import Optional, List, Dict
+
+
+def get_vault_path() -> Path:
+    """Get the vault path"""
+    vault = os.getenv('AI_EMPLOYEE_VAULT', './AI_Employee_Vault')
+    return Path(vault).resolve()
+
+
+def scan_needs_action(vault_path: Path) -> List[Dict]:
+    """Scan the Needs_Action folder and return list of tasks"""
+    needs_action = vault_path / 'Needs_Action'
+
+    if not needs_action.exists():
+        return []
+
+    tasks = []
+    for item in needs_action.iterdir():
+        if item.is_file() and item.suffix == '.md':
+            content = item.read_text(encoding='utf-8')
+
+            # Parse frontmatter
+            task_info = {
+                'id': item.stem,
+                'filename': item.name,
+                'path': str(item),
+                'content': content,
+                'type': 'unknown',
+                'priority': 'medium',
+                'status': 'pending'
+            }
+
+            # Extract metadata from frontmatter
+            if content.startswith('---'):
+                try:
+                    end = content.find('---', 3)
+                    if end > 0:
+                        frontmatter = content[3:end].strip()
+                        for line in frontmatter.split('\n'):
+                            if ':' in line:
+                                key, value = line.split(':', 1)
+                                task_info[key.strip()] = value.strip()
+                except:
+                    pass
+
+            tasks.append(task_info)
+
+    return tasks
+
+
+def generate_plan(task: Dict) -> str:
+    """Generate a plan for a task based on its type"""
+    task_type = task.get('type', 'unknown')
+    task_content = task.get('content', '')
+
+    # Extract details from content
+    details = task_content[:500] if len(task_content) > 500 else task_content
+
+    plans = {
+        'email': {
+            'steps': [
+                'Review email content and sender',
+                'Determine if reply is needed',
+                'Draft response (if needed)',
+                'Request approval for sending',
+                'Mark as processed'
+            ],
+            'resources': ['Email templates', 'Contact list', 'Approval workflow'],
+            'estimated_time': '15-30 minutes'
+        },
+        'file_drop': {
+            'steps': [
+                'Review file contents',
+                'Determine file type and purpose',
+                'Process or categorize file',
+                'Move to appropriate folder',
+                'Log action'
+            ],
+            'resources': ['File processing tools', 'Category definitions'],
+            'estimated_time': '5-10 minutes'
+        },
+        'linkedin_post': {
+            'steps': [
+                'Review generated content',
+                'Check for brand alignment',
+                'Verify hashtags and links',
+                'Queue for approval',
+                'Schedule or post'
+            ],
+            'resources': ['Brand guidelines', 'Hashtag strategy'],
+            'estimated_time': '10 minutes'
+        },
+        'approval_request': {
+            'steps': [
+                'Review request details',
+                'Verify action legitimacy',
+                'Check permissions',
+                'Execute approved action',
+                'Log completion'
+            ],
+            'resources': ['Approval workflow', 'Action execution tools'],
+            'estimated_time': '5 minutes'
+        }
+    }
+
+    # Get plan template or default
+    plan_template = plans.get(task_type, {
+        'steps': [
+            'Analyze task requirements',
+            'Gather necessary information',
+            'Execute primary action',
+            'Verify results',
+            'Complete and archive'
+        ],
+        'resources': ['Documentation', 'Tools'],
+        'estimated_time': '15-30 minutes'
+    })
+
+    # Generate plan content
+    steps_md = '\n'.join([f"{i+1}. [ ] {step}" for i, step in enumerate(plan_template['steps'])])
+    resources_md = '\n'.join([f"- [ ] {resource}" for resource in plan_template['resources']])
+
+    plan_content = f"""# Plan for Task: {task['filename']}
+
+## Task Information
+- **ID**: {task['id']}
+- **Type**: {task_type}
+- **Priority**: {task.get('priority', 'medium')}
+- **Created**: {datetime.now().isoformat()}
+
+## Original Task
+```
+{details}
+```
+
+## Execution Plan
+
+### Steps
+{steps_md}
+
+### Resources Needed
+{resources_md}
+
+## Estimated Time
+{plan_template['estimated_time']}
+
+## Notes
+_Add any specific notes or considerations_
+
+## Completion Criteria
+- [ ] All steps completed
+- [ ] Results verified
+- [ ] Task moved to Done
+- [ ] Activity logged
+
+---
+*Plan generated by AI Employee - Silver Tier*
+"""
+
+    return plan_content
+
+
+def create_plan(task_id: str = None, auto_select: bool = False) -> Optional[Path]:
+    """Create a plan file for a task"""
+    vault_path = get_vault_path()
+    needs_action = vault_path / 'Needs_Action'
+    plans_folder = vault_path / 'Plans'
+    plans_folder.mkdir(parents=True, exist_ok=True)
+
+    # Find task
+    tasks = scan_needs_action(vault_path)
+
+    if not tasks:
+        print("[INFO] No tasks found in Needs_Action")
+        return None
+
+    # Select task
+    if task_id:
+        task = next((t for t in tasks if t['id'] == task_id or t['filename'].startswith(task_id)), None)
+    elif auto_select:
+        task = tasks[0]  # Select most recent
+    else:
+        # Show list and let user select
+        print("\nAvailable tasks:")
+        for i, t in enumerate(tasks, 1):
+            print(f"  {i}. {t['filename']} (Type: {t.get('type', 'unknown')})")
+
+        try:
+            selection = int(input("\nSelect task number: ")) - 1
+            task = tasks[selection]
+        except (ValueError, IndexError):
+            print("Invalid selection")
+            return None
+
+    if not task:
+        print(f"Task not found: {task_id}")
+        return None
+
+    # Generate plan
+    plan_content = generate_plan(task)
+
+    # Create plan file
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    plan_filename = f"PLAN_{task['id']}_{timestamp}.md"
+    plan_file = plans_folder / plan_filename
+
+    # Add frontmatter
+    full_content = f"""---
+type: plan
+source_task: {task['filename']}
+task_id: {task['id']}
+created: {datetime.now().isoformat()}
+status: pending
+---
+
+{plan_content}
+"""
+
+    plan_file.write_text(full_content, encoding='utf-8')
+
+    print(f"[OK] Plan created: {plan_file.name}")
+    print(f"  Task: {task['filename']}")
+    print(f"  Type: {task.get('type', 'unknown')}")
+
+    # Log
+    log_action('plan_created', task['id'], plan_file.name)
+
+    return plan_file
+
+
+def list_plans():
+    """List all plans"""
+    vault_path = get_vault_path()
+    plans_folder = vault_path / 'Plans'
+
+    if not plans_folder.exists():
+        print("[INFO] No Plans folder found")
+        return
+
+    plans = list(plans_folder.glob('PLAN_*.md'))
+
+    print(f"\n{len(plans)} plan(s) found:")
+    for plan in plans:
+        print(f"  - {plan.name}")
+
+
+def log_action(action_type: str, task_id: str, details: str):
+    """Log actions"""
+    vault_path = get_vault_path()
+    log_dir = vault_path / 'Logs'
+    log_dir.mkdir(exist_ok=True)
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    log_file = log_dir / f'{today}.json'
+
+    entry = {
+        'timestamp': datetime.now().isoformat(),
+        'action_type': action_type,
+        'task_id': task_id,
+        'details': details
+    }
+
+    if log_file.exists():
+        try:
+            with open(log_file, 'r', encoding='utf-8') as f:
+                logs = json.load(f)
+        except:
+            logs = []
+    else:
+        logs = []
+
+    logs.append(entry)
+
+    with open(log_file, 'w', encoding='utf-8') as f:
+        json.dump(logs, f, indent=2)
+
+
+def main():
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description='Plan Generator for AI Employee')
+    parser.add_argument('action', choices=['create', 'list', 'auto'],
+                        help='Action to perform')
+    parser.add_argument('--task-id', help='Task ID to create plan for')
+    parser.add_argument('--yes', action='store_true',
+                        help='Auto-select task (for auto action)')
+
+    args = parser.parse_args()
+
+    if args.action == 'create':
+        create_plan(args.task_id)
+    elif args.action == 'list':
+        list_plans()
+    elif args.action == 'auto':
+        create_plan(auto_select=True)
+
+
+if __name__ == '__main__':
+    main()

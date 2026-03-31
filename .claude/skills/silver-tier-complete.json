@@ -1,0 +1,29 @@
+{
+  "name": "silver-tier-complete",
+  "description": "Complete Silver Tier skill combining Gmail Watcher, LinkedIn Watcher, and approval workflows for the AI Employee",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": [
+          "gmail-check",
+          "linkedin-generate",
+          "linkedin-queue",
+          "linkedin-schedule",
+          "process-approved"
+        ],
+        "description": "Silver Tier action to perform"
+      },
+      "category": {
+        "type": "string",
+        "description": "LinkedIn post category"
+      },
+      "days": {
+        "type": "integer",
+        "description": "Days to schedule LinkedIn posts"
+      }
+    },
+    "required": ["action"]
+  }
+}

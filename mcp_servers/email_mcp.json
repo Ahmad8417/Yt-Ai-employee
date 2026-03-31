@@ -1,0 +1,77 @@
+{
+  "name": "email-mcp",
+  "description": "MCP server for sending emails via Gmail",
+  "tools": [
+    {
+      "name": "send_email",
+      "description": "Send an email to a recipient",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "description": "Recipient email address"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Email subject"
+          },
+          "body": {
+            "type": "string",
+            "description": "Email body content"
+          },
+          "cc": {
+            "type": "string",
+            "description": "CC recipients (comma-separated)"
+          },
+          "bcc": {
+            "type": "string",
+            "description": "BCC recipients (comma-separated)"
+          },
+          "attachments": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "List of file paths to attach"
+          },
+          "html": {
+            "type": "boolean",
+            "description": "Whether body is HTML",
+            "default": false
+          }
+        },
+        "required": ["to", "subject", "body"]
+      }
+    },
+    {
+      "name": "draft_email",
+      "description": "Create an email draft for review",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "description": "Recipient email address"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Email subject"
+          },
+          "body": {
+            "type": "string",
+            "description": "Email body content"
+          },
+          "cc": {
+            "type": "string",
+            "description": "CC recipients"
+          },
+          "html": {
+            "type": "boolean",
+            "description": "Whether body is HTML",
+            "default": false
+          }
+        },
+        "required": ["to", "subject", "body"]
+      }
+    }
+  ]
+}

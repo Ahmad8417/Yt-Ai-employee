@@ -1,0 +1,20 @@
+{
+  "name": "gmail-watcher",
+  "description": "Watch Gmail for new important unread emails and create action files in the vault",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "action": {
+        "type": "string",
+        "enum": ["check", "daemon"],
+        "description": "Action to perform: check once or run as daemon"
+      },
+      "interval": {
+        "type": "integer",
+        "description": "Check interval in seconds for daemon mode",
+        "default": 120
+      }
+    },
+    "required": ["action"]
+  }
+}
