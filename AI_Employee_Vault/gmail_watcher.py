@@ -433,6 +433,77 @@ class GmailWatcher:
             logger.error(f"Failed to mark message as read: {e}")
             return False
 
+    def send_reply(self, original_email: Dict[str, Any], reply_body: str) -> bool:
+        """
+        Send a reply to an email and mark it as read.
+
+        Args:
+            original_email: Original email dictionary containing 'id', 'thread_id', 'sender', 'subject'
+            reply_body: The body text of the reply message
+
+        Returns:
+            True if successful, False otherwise
+        """
+        if not self.service:
+            logger.error("Not authenticated")
+            return False
+
+        try:
+            # Extract sender email address (remove name if present)
+            sender = original_email.get('sender', '')
+            # Parse "Name <email@example.com>" format
+            if '<' in sender and '>' in sender:
+                to_email = sender[sender.find('<') + 1:sender.find('>')]
+            else:
+                to_email = sender
+
+            subject = original_email.get('subject', 'Re: No Subject')
+            # Add Re: prefix if not already present
+            if not subject.lower().startswith('re:'):
+                subject = f"Re: {subject}"
+
+            thread_id = original_email.get('thread_id')
+            message_id = original_email.get('id')
+
+            # Create email message
+            from email.mime.text import MIMEText
+            from email.utils import parseaddr
+
+            msg = MIMEText(reply_body)
+            msg['To'] = to_email
+            msg['From'] = self.user_email
+            msg['Subject'] = subject
+
+            # Set In-Reply-To and References headers for threading
+            if message_id:
+                # Gmail uses the message ID as the reference
+                msg['In-Reply-To'] = f"<{message_id}@mail.gmail.com>"
+                msg['References'] = f"<{message_id}@mail.gmail.com>"
+
+            # Encode the message
+            raw_message = base64.urlsafe_b64encode(msg.as_bytes()).decode('utf-8')
+
+            # Send the message
+            send_body = {
+                'raw': raw_message,
+                'threadId': thread_id
+            }
+
+            sent_message = self.service.users().messages().send(
+                userId='me',
+                body=send_body
+            ).execute()
+
+            logger.info(f"Reply sent to {to_email}, message ID: {sent_message['id']}")
+            return True
+
+        except HttpError as e:
+            logger.error(f"Failed to send reply: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Error sending reply: {e}")
+            return False
+
     def mark_as_unread(self, message_id: str) -> bool:
         """
         Mark a specific email as unread by adding the UNREAD label.
