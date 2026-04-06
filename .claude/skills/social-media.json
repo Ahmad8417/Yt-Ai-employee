@@ -1,0 +1,170 @@
+{
+  "name": "social-media",
+  "description": "Facebook and Instagram Graph API integration - Post content and retrieve analytics with Human-in-the-Loop approval",
+  "type": "agent-skill",
+  "version": "1.0.0",
+  "tier": "gold",
+  "author": "AI Employee",
+  "entrypoint": "python mcp_servers/social_mcp.py",
+  "config": {
+    "requires_env": [
+      "FACEBOOK_ACCESS_TOKEN",
+      "FACEBOOK_PAGE_ID",
+      "INSTAGRAM_BUSINESS_ACCOUNT_ID"
+    ],
+    "api_version": "v18.0",
+    "approval_required": true
+  },
+  "commands": {
+    "connect": {
+      "description": "Test connection to Facebook Graph API",
+      "usage": "/social connect",
+      "example": "/social connect"
+    },
+    "post-facebook": {
+      "description": "Post content to Facebook Page (requires approval)",
+      "usage": "/social post-facebook --message \"Your message here\" [--link URL] [--image-url URL]",
+      "example": "/social post-facebook --message \"Check out our new AI Employee!\" --link https://example.com",
+      "parameters": {
+        "message": {
+          "type": "string",
+          "required": true,
+          "description": "Post text content"
+        },
+        "link": {
+          "type": "string",
+          "description": "Optional URL to include in post"
+        },
+        "image_url": {
+          "type": "string",
+          "description": "Optional image URL (must be publicly accessible)"
+        }
+      },
+      "approval_required": true,
+      "approval_reason": "Posts are public and represent the company brand"
+    },
+    "post-instagram": {
+      "description": "Post photo to Instagram Business Account (requires approval)",
+      "usage": "/social post-instagram --message \"Caption\" --image-url \"https://...\"",
+      "example": "/social post-instagram --message \"Behind the scenes!\" --image-url \"https://example.com/photo.jpg\"",
+      "parameters": {
+        "message": {
+          "type": "string",
+          "required": true,
+          "description": "Post caption"
+        },
+        "image_url": {
+          "type": "string",
+          "required": true,
+          "description": "Publicly accessible image URL"
+        }
+      },
+      "approval_required": true,
+      "approval_reason": "Posts are public and represent the company brand"
+    },
+    "insights": {
+      "description": "Get Facebook Page insights and analytics",
+      "usage": "/social insights [--since YYYY-MM-DD] [--until YYYY-MM-DD]",
+      "example": "/social insights --since 2026-01-01 --until 2026-01-31",
+      "parameters": {
+        "since": {
+          "type": "string",
+          "description": "Start date (defaults to 7 days ago)"
+        },
+        "until": {
+          "type": "string",
+          "description": "End date (defaults to today)"
+        }
+      }
+    },
+    "ig-insights": {
+      "description": "Get Instagram Business Account insights",
+      "usage": "/social ig-insights [--since YYYY-MM-DD] [--until YYYY-MM-DD]",
+      "example": "/social ig-insights",
+      "parameters": {
+        "since": {
+          "type": "string",
+          "description": "Start date (defaults to 7 days ago)"
+        },
+        "until": {
+          "type": "string",
+          "description": "End date (defaults to today)"
+        }
+      }
+    },
+    "weekly-report": {
+      "description": "Generate weekly social media summary report",
+      "usage": "/social weekly-report",
+      "example": "/social weekly-report",
+      "output": "Saves report to /Briefings/social_report_YYYYMMDD.md"
+    }
+  },
+  "capabilities": {
+    "facebook": {
+      "description": "Facebook Page posting and insights",
+      "operations": ["post_to_page", "get_page_insights"],
+      "rate_limits": {
+        "posts_per_hour": 10,
+        "api_calls_per_hour": 200
+      }
+    },
+    "instagram": {
+      "description": "Instagram Business Account posting and insights",
+      "operations": ["post_to_instagram", "get_ig_insights"],
+      "requirements": [
+        "Instagram Business Account must be connected to Facebook Page",
+        "Image URLs must be publicly accessible",
+        "Posts require manual approval"
+      ]
+    }
+  },
+  "approval_workflow": {
+    "description": "All social media posts require Human-in-the-Loop approval",
+    "process": [
+      "AI Employee drafts post content",
+      "Approval request file created in /Pending_Approval/",
+      "Human reviews and moves to /Approved/ or /Rejected/",
+      "Approved posts are published via MCP",
+      "Audit log entry created"
+    ],
+    "auto_approve_conditions": [
+      "Only for testing/development environments",
+      "Never in production"
+    ]
+  },
+  "documentation": {
+    "setup": [
+      "1. Create Facebook App at https://developers.facebook.com/",
+      "2. Add 'Pages' and 'Instagram Basic Display' products",
+      "3. Generate Page Access Token with required permissions",
+      "4. Connect Instagram Business Account to Facebook Page",
+      "5. Set FACEBOOK_ACCESS_TOKEN, FACEBOOK_PAGE_ID, INSTAGRAM_BUSINESS_ACCOUNT_ID in .env"
+    ],
+    "permissions_required": [
+      "pages_manage_posts - Publish to Facebook Page",
+      "pages_read_engagement - Get Page insights",
+      "instagram_basic - Access Instagram account info",
+      "instagram_content_publish - Publish to Instagram"
+    ],
+    "troubleshooting": [
+      "If 'not_configured' error, check .env file has all required variables",
+      "If token error, generate new long-lived access token at developers.facebook.com",
+      "If Instagram fails, verify account is Business Account and connected to Page",
+      "Image URLs must be publicly accessible (not localhost) for Instagram"
+    ]
+  },
+  "examples": {
+    "facebook_post": {
+      "description": "Post business update to Facebook",
+      "command": "/social post-facebook --message \"Excited to announce our new AI Employee system is now live! Automating our workflow one task at a time.\" --link https://aiemployee.local"
+    },
+    "instagram_post": {
+      "description": "Share behind-the-scenes photo",
+      "command": "/social post-instagram --message \"Behind the scenes: Building the future of work automation 🚀 #AIEmployee #Automation\" --image-url \"https://cdn.example.com/photos/team.jpg\""
+    },
+    "weekly_analytics": {
+      "description": "Review weekly performance",
+      "command": "/social weekly-report"
+    }
+  }
+}

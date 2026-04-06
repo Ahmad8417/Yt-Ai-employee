@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Odoo
+  db:
+    image: postgres:15-alpine
+    container_name: ai_employee_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ai_employee_network
+
+  # Odoo Community v19
+  odoo:
+    image: odoo:19.0
+    container_name: ai_employee_odoo
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+      - "8072:8072"  # Longpolling
+    environment:
+      HOST: db
+      USER: odoo
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      ODOO_RC: /etc/odoo/odoo.conf
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - ./odoo/config:/etc/odoo
+      - ./odoo/addons:/mnt/extra-addons
+      - ./odoo/logs:/var/log/odoo
+    command: ["odoo", "--config", "/etc/odoo/odoo.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - ai_employee_network
+
+  # pgAdmin (Optional - Database Management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ai_employee_pgadmin
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@aiemployee.local}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - ai_employee_network
+
+  # AI Employee Core Application
+  ai-employee:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai_employee_core
+    restart: unless-stopped
+    depends_on:
+      odoo:
+        condition: service_healthy
+    environment:
+      # Vault Configuration
+      AI_EMPLOYEE_VAULT: /app/vault
+      # Odoo Configuration
+      ODOO_URL: http://odoo:8069
+      ODOO_DB: ${ODOO_DB:-ai_employee_db}
+      ODOO_USER: ${ODOO_USER:-admin}
+      ODOO_PASSWORD: ${ODOO_ADMIN_PASSWORD:-admin}
+      # Facebook/Instagram Configuration
+      FACEBOOK_ACCESS_TOKEN: ${FACEBOOK_ACCESS_TOKEN:-}
+      FACEBOOK_PAGE_ID: ${FACEBOOK_PAGE_ID:-}
+      INSTAGRAM_BUSINESS_ACCOUNT_ID: ${INSTAGRAM_BUSINESS_ACCOUNT_ID:-}
+      # Gmail Configuration (existing)
+      GMAIL_CREDENTIALS_PATH: /app/credentials.json
+      # Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./AI_Employee_Vault:/app/vault
+      - ./logs:/app/logs
+      - ./credentials.json:/app/credentials.json:ro
+      - ./token.json:/app/token.json
+    ports:
+      - "8080:8080"  # Health check port
+    command: python orchestrator.py daemon
+    networks:
+      - ai_employee_network
+
+  # Redis (for task queue and caching)
+  redis:
+    image: redis:7-alpine
+    container_name: ai_employee_redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - ai_employee_network
+
+volumes:
+  odoo-db-data:
+    driver: local
+  odoo-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  ai_employee_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

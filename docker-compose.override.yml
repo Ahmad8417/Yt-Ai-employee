@@ -1,0 +1,52 @@
+# Docker Compose Override - Development Configuration
+# This file is automatically loaded by docker-compose alongside docker-compose.yml
+# Use this for local development overrides
+
+version: '3.8'
+
+services:
+  # Override AI Employee for development
+  ai-employee:
+    volumes:
+      # Mount source code for live reloading during development
+      - ./:/app:cached
+      - /app/__pycache__  # Prevent pycache pollution
+    environment:
+      - LOG_LEVEL=DEBUG
+      - PYTHONUNBUFFERED=1
+    # Keep container running for debugging
+    stdin_open: true
+    tty: true
+    command: python orchestrator.py daemon
+
+  # Override Odoo for development
+  odoo:
+    volumes:
+      # Mount source for custom addons development
+      - ./odoo/addons:/mnt/extra-addons:cached
+      - ./odoo/logs:/var/log/odoo
+    environment:
+      - LOG_LEVEL=debug
+    ports:
+      - "8069:8069"
+      - "5678:5678"  # Debug port for Odoo
+
+  # Override PostgreSQL for development
+  db:
+    ports:
+      - "5432:5432"  # Expose PostgreSQL for external tools
+    environment:
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+
+  # Optional: Add mailpit for testing emails
+  mailpit:
+    image: axllent/mailpit
+    container_name: ai_employee_mailpit
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    volumes:
+      - mailpit-data:/data
+
+volumes:
+  mailpit-data:

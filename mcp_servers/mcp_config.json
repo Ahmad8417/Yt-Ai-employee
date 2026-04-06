@@ -1,0 +1,110 @@
+{
+  "email": {
+    "name": "email-mcp",
+    "description": "Email operations via Gmail API and SMTP",
+    "entrypoint": "python mcp_servers/email_mcp.py",
+    "cwd": ".",
+    "env_vars": {
+      "GMAIL_CREDENTIALS_PATH": "/app/credentials.json"
+    },
+    "health_check": null,
+    "fallback": "email_queue_mode",
+    "timeout": 30,
+    "retry_count": 3,
+    "enabled": true,
+    "priority": 100,
+    "capabilities": ["send_email", "draft_email", "search_emails", "auto_reply"],
+    "approval_required": ["send_email"],
+    "domains": ["email", "gmail", "smtp"]
+  },
+  "odoo": {
+    "name": "odoo-mcp",
+    "description": "Odoo 19+ Accounting and ERP via JSON-RPC",
+    "entrypoint": "python mcp_servers/odoo_mcp.py",
+    "cwd": ".",
+    "env_vars": {
+      "ODOO_URL": "http://odoo:8069",
+      "ODOO_DB": "ai_employee_db",
+      "ODOO_USER": "admin"
+    },
+    "health_check": null,
+    "fallback": "accounting_offline_mode",
+    "timeout": 60,
+    "retry_count": 3,
+    "enabled": true,
+    "priority": 90,
+    "capabilities": [
+      "list_customers",
+      "create_customer",
+      "create_invoice",
+      "get_outstanding_invoices",
+      "get_account_summary",
+      "post_journal_entry"
+    ],
+    "approval_required": [
+      "create_customer",
+      "create_invoice",
+      "post_journal_entry"
+    ],
+    "approval_thresholds": {
+      "create_invoice": 500
+    },
+    "domains": ["accounting", "invoice", "customer", "odoo", "erp"]
+  },
+  "social": {
+    "name": "social-mcp",
+    "description": "Facebook/Instagram Graph API integration",
+    "entrypoint": "python mcp_servers/social_mcp.py",
+    "cwd": ".",
+    "env_vars": {
+      "FACEBOOK_ACCESS_TOKEN": "",
+      "FACEBOOK_PAGE_ID": "",
+      "INSTAGRAM_BUSINESS_ACCOUNT_ID": ""
+    },
+    "health_check": null,
+    "fallback": "social_queue_mode",
+    "timeout": 30,
+    "retry_count": 3,
+    "enabled": true,
+    "priority": 110,
+    "capabilities": [
+      "post_to_page",
+      "post_to_instagram",
+      "get_page_insights",
+      "get_ig_insights",
+      "generate_weekly_report"
+    ],
+    "approval_required": [
+      "post_to_facebook",
+      "post_to_instagram"
+    ],
+    "domains": ["social", "facebook", "instagram", "post"]
+  },
+  "browser": {
+    "name": "browser-mcp",
+    "description": "Web automation via Playwright",
+    "entrypoint": "python mcp_servers/browser_mcp.py",
+    "cwd": ".",
+    "env_vars": {
+      "PLAYWRIGHT_HEADLESS": "true"
+    },
+    "health_check": null,
+    "fallback": "browser_offline_mode",
+    "timeout": 120,
+    "retry_count": 2,
+    "enabled": false,
+    "priority": 120,
+    "capabilities": [
+      "navigate",
+      "click",
+      "fill_form",
+      "screenshot",
+      "extract_data"
+    ],
+    "approval_required": [
+      "click",
+      "fill_form"
+    ],
+    "domains": ["browser", "web", "automation"]
+  }
+}

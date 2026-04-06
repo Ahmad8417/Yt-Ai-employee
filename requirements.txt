@@ -14,3 +14,38 @@ croniter>=2.0.0
 
 # HTTP for LinkedIn API
 requests>=2.31.0
+
+# ============================================
+# GOLD TIER DEPENDENCIES
+# ============================================
+
+# Facebook/Instagram Graph API
+facebook-sdk>=3.1.0
+
+# Odoo Integration
+xmltodict>=0.13.0              # XML parsing for Odoo responses
+
+# Docker Integration
+docker>=6.1.0                  # Docker SDK for Python
+
+# Database
+psycopg2-binary>=2.9.7         # PostgreSQL adapter
+SQLAlchemy>=2.0.0              # Database ORM
+
+# Caching & Queue
+redis>=5.0.0                   # Redis client
+celery>=5.3.0                # Distributed task queue (optional)
+
+# Monitoring & Health
+prometheus-client>=0.17.0      # Metrics export (optional)
+
+# JSON Schema validation
+jsonschema>=4.19.0             # Schema validation for MCP
+
+# Date/Time handling
+python-dateutil>=2.8.2         # Date parsing
+
+# Additional utilities
+pydantic>=2.0.0                # Data validation
+httpx>=0.25.0                  # Modern HTTP client
+

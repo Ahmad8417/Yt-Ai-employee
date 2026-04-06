@@ -1,0 +1,146 @@
+{
+  "name": "odoo-accounting",
+  "description": "Odoo 19+ Accounting Integration - Manage customers, invoices, and account summaries via JSON-RPC",
+  "type": "agent-skill",
+  "version": "1.0.0",
+  "tier": "gold",
+  "author": "AI Employee",
+  "entrypoint": "python mcp_servers/odoo_mcp.py",
+  "config": {
+    "requires_env": ["ODOO_URL", "ODOO_DB", "ODOO_USER", "ODOO_PASSWORD"],
+    "default_url": "http://localhost:8069",
+    "default_db": "ai_employee_db"
+  },
+  "commands": {
+    "connect": {
+      "description": "Test connection to Odoo",
+      "usage": "/odoo connect",
+      "example": "/odoo connect"
+    },
+    "list-customers": {
+      "description": "List customers from Odoo CRM",
+      "usage": "/odoo list-customers [limit=10]",
+      "example": "/odoo list-customers limit=20",
+      "parameters": {
+        "limit": {
+          "type": "integer",
+          "default": 10,
+          "description": "Maximum number of customers to return"
+        }
+      }
+    },
+    "create-customer": {
+      "description": "Create a new customer in Odoo",
+      "usage": "/odoo create-customer name=\"Customer Name\" email=\"email@example.com\"",
+      "example": "/odoo create-customer name=\"Acme Corp\" email=\"billing@acme.com\" phone=\"+1-555-0000\" is_company=true",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Customer name"
+        },
+        "email": {
+          "type": "string",
+          "description": "Customer email address"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Customer phone number"
+        },
+        "is_company": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this is a company"
+        }
+      },
+      "approval_required": true,
+      "approval_reason": "Creates a new customer record in the accounting system"
+    },
+    "create-invoice": {
+      "description": "Create a customer invoice",
+      "usage": "/odoo create-invoice partner_id=123 lines=\"[{'description': 'Service', 'quantity': 1, 'price_unit': 100.00}]\"",
+      "example": "/odoo create-invoice partner_id=5 lines=\"[{'description': 'Consulting', 'quantity': 10, 'price_unit': 150.00}]\"",
+      "parameters": {
+        "partner_id": {
+          "type": "integer",
+          "required": true,
+          "description": "Customer ID (from res.partner)"
+        },
+        "lines": {
+          "type": "array",
+          "required": true,
+          "description": "Invoice line items with description, quantity, price_unit"
+        },
+        "invoice_date": {
+          "type": "string",
+          "description": "Invoice date (YYYY-MM-DD), defaults to today"
+        },
+        "due_date": {
+          "type": "string",
+          "description": "Due date (YYYY-MM-DD), defaults to 30 days from invoice date"
+        }
+      },
+      "approval_required": true,
+      "approval_threshold": 500,
+      "approval_reason": "Creates a financial obligation and may trigger customer notifications"
+    },
+    "get-outstanding-invoices": {
+      "description": "Get list of unpaid invoices",
+      "usage": "/odoo get-outstanding-invoices [partner_id=123]",
+      "example": "/odoo get-outstanding-invoices",
+      "parameters": {
+        "partner_id": {
+          "type": "integer",
+          "description": "Optional: Filter by customer ID"
+        }
+      }
+    },
+    "account-summary": {
+      "description": "Get account summary (P&L, Balance) for a date range",
+      "usage": "/odoo account-summary [date_from=YYYY-MM-DD] [date_to=YYYY-MM-DD]",
+      "example": "/odoo account-summary date_from=2026-01-01 date_to=2026-01-31",
+      "parameters": {
+        "date_from": {
+          "type": "string",
+          "description": "Start date (YYYY-MM-DD), defaults to 30 days ago"
+        },
+        "date_to": {
+          "type": "string",
+          "description": "End date (YYYY-MM-DD), defaults to today"
+        }
+      }
+    },
+    "post-journal-entry": {
+      "description": "Post a manual journal entry (advanced)",
+      "usage": "/odoo post-journal-entry lines=\"[...]\" reference=\"Memo\"",
+      "parameters": {
+        "lines": {
+          "type": "array",
+          "required": true,
+          "description": "Journal entry lines with account_id, debit, credit"
+        },
+        "reference": {
+          "type": "string",
+          "description": "Reference/memo for the entry"
+        }
+      },
+      "approval_required": true,
+      "approval_reason": "Directly affects general ledger and financial statements"
+    }
+  },
+  "capabilities": {
+    "accounting": {
+      "description": "Full accounting integration via Odoo",
+      "models": ["res.partner", "account.move", "account.account"],
+      "operations": ["create", "read", "search", "report"]
+    }
+  },
+  "documentation": {
+    "setup": "Ensure Docker Compose is running with Odoo container. Set ODOO_URL, ODOO_DB, ODOO_USER, ODOO_PASSWORD in .env",
+    "troubleshooting": [
+      "If connection fails, verify docker-compose ps shows healthy containers",
+      "Check Odoo logs: docker-compose logs -f odoo",
+      "Ensure Odoo has completed initialization (2-3 minutes on first run)"
+    ]
+  }
+}
